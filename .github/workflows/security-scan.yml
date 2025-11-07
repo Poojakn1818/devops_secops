@@ -1,6 +1,6 @@
 name: Security Scanning
 
-# ASSIGNMENT REQUIREMENT: Run on every merge to main branch
+# Run on every merge to main branch
 on:
   push:
     branches: [ main ]
@@ -90,14 +90,3 @@ jobs:
           name: govulncheck-results
           path: govulncheck-results.txt
 
-      # Summary report
-      - name: Security Scan Summary
-        run: |
-          echo "## Security Scan Completed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Gosec - Code security analysis" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Trivy - Filesystem vulnerability scan" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Nancy - Dependency vulnerability scan" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Govulncheck - Official Go vulnerability database" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Download artifacts for detailed reports" >> $GITHUB_STEP_SUMMARY

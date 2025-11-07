@@ -1,8 +1,7 @@
 name: Docker Build Debug
 
 on:
-  workflow_dispatch:  # Manual trigger only
-
+  workflow_dispatch:  
 jobs:
   debug-docker:
     runs-on: ubuntu-latest
