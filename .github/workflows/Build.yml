@@ -22,15 +22,20 @@ jobs:
           go-version: '1.24' 
 
       # 3. Cache dependencies
+      - name: Clean old Go mod cache
+        run: |
+          rm -rf ~/go/pkg/mod || true
+          rm -rf ~/.cache/go-build || true
+
       - name: Cache Go modules
         uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+        key: ${{ runner.os }}-go1.24-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go1.24-
 
       # 4. Run GolangCI-Lint FIRST for fast feedback
       - name: Run GolangCI-Lint
