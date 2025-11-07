@@ -1,0 +1,45 @@
+name: Docker Build Debug
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  debug-docker:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Go files
+        run: |
+          echo "=== Checking Go module files ==="
+          ls -la go.* || echo "No go.mod or go.sum found!"
+          echo ""
+          echo "=== Content of go.mod ==="
+          cat go.mod || echo "go.mod not found"
+          echo ""
+          echo "=== Content of go.sum ==="
+          cat go.sum || echo "go.sum not found"
+          echo ""
+          echo "=== Directory structure ==="
+          find . -name "*.go" -type f | head -20
+
+      - name: Test go mod download locally
+        run: |
+          echo "=== Testing go mod download ==="
+          docker run --rm -v $(pwd):/app -w /app golang:1.23-alpine sh -c "
+            apk add --no-cache git &&
+            go mod download -x
+          " || echo "Failed to download modules"
+
+      - name: Try building with verbose output
+        run: |
+          echo "=== Attempting Docker build with debug ==="
+          docker build --progress=plain --no-cache . 2>&1 | tee build-log.txt || true
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-build-debug-log
+          path: build-log.txt
