@@ -20,47 +20,32 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.24' 
+          cache: true  # Use built-in caching from setup-go
 
-      # 3. Cache dependencies
-      - name: Clean old Go mod cache
-        run: |
-          rm -rf ~/go/pkg/mod || true
-          rm -rf ~/.cache/go-build || true
-
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-        key: ${{ runner.os }}-go1.24-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go1.24-
-
-      # 4. Run GolangCI-Lint FIRST for fast feedback
+      # 3. Run GolangCI-Lint FIRST for fast feedback
       - name: Run GolangCI-Lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           args: --timeout 3m
 
-      # 5. Download dependencies
+      # 4. Download dependencies
       - name: Download dependencies
         run: go mod download
 
-      # 6. Format and vet code
+      # 5. Format and vet code
       - name: Format and Vet
         run: |
           go fmt ./...
           go vet ./...
 
-      # 7. Run tests with coverage (ASSIGNMENT REQUIREMENT)
+      # 6. Run tests with coverage (ASSIGNMENT REQUIREMENT)
       - name: Run tests with coverage
         run: |
           go test ./... -v -coverprofile=coverage.out -covermode=atomic
           go tool cover -func=coverage.out
 
-      # 8. Upload coverage to Codecov (ASSIGNMENT REQUIREMENT - Coverage Service)
+      # 7. Upload coverage to Codecov (ASSIGNMENT REQUIREMENT - Coverage Service)
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -69,18 +54,18 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      # 9. Upload coverage artifact for manual review
+      # 8. Upload coverage artifact for manual review
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage.out
 
-      # 10. Build binary
+      # 9. Build binary
       - name: Build binary
         run: go build -v -o ./bin/app ./cmd/
 
-      # 11. Upload binary artifact
+      # 10. Upload binary artifact
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
