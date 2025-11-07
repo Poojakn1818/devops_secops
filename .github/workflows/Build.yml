@@ -39,13 +39,13 @@ jobs:
           go fmt ./...
           go vet ./...
 
-      # 6. Run tests with coverage (ASSIGNMENT REQUIREMENT)
+      # 6. Run tests with coverage 
       - name: Run tests with coverage
         run: |
           go test ./... -v -coverprofile=coverage.out -covermode=atomic
           go tool cover -func=coverage.out
 
-      # 7. Upload coverage to Codecov (ASSIGNMENT REQUIREMENT - Coverage Service)
+      # 7. Upload coverage to Codecov 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
