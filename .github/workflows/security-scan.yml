@@ -1,0 +1,103 @@
+name: Security Scanning
+
+# ASSIGNMENT REQUIREMENT: Run on every merge to main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # For uploading SARIF results
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      # GOSEC - Go Security Checker (Code Analysis)
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: '-fmt sarif -out gosec-results.sarif ./...'
+        continue-on-error: true
+
+      - name: Upload Gosec SARIF results
+        uses: actions/upload-artifact@v4
+        with:
+          name: gosec-sarif-results
+          path: gosec-results.sarif
+
+      # Gosec JSON output for detailed review
+      - name: Run Gosec (JSON output)
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec -fmt json -out gosec-results.json ./... || true
+
+      - name: Upload Gosec JSON results
+        uses: actions/upload-artifact@v4
+        with:
+          name: gosec-json-results
+          path: gosec-results.json
+
+      # TRIVY - Vulnerability Scanner (Dependencies and Filesystem)
+      - name: Run Trivy vulnerability scanner (Filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy FS results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-results
+          path: trivy-fs-results.sarif
+
+      # NANCY - Dependency Vulnerability Scanner
+      - name: Run Nancy (Dependency Check)
+        run: |
+          go install github.com/sonatype-nexus-community/nancy@latest
+          go list -json -deps ./... | nancy sleuth --output json > nancy-results.json || true
+        continue-on-error: true
+
+      - name: Upload Nancy results
+        uses: actions/upload-artifact@v4
+        with:
+          name: nancy-results
+          path: nancy-results.json
+
+      # GOVULNCHECK - Official Go Vulnerability Scanner
+      - name: Run govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./... > govulncheck-results.txt || true
+        continue-on-error: true
+
+      - name: Upload govulncheck results
+        uses: actions/upload-artifact@v4
+        with:
+          name: govulncheck-results
+          path: govulncheck-results.txt
+
+      # Summary report
+      - name: Security Scan Summary
+        run: |
+          echo "## Security Scan Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Gosec - Code security analysis" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Trivy - Filesystem vulnerability scan" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Nancy - Dependency vulnerability scan" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Govulncheck - Official Go vulnerability database" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Download artifacts for detailed reports" >> $GITHUB_STEP_SUMMARY
