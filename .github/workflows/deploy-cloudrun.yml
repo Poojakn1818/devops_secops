@@ -6,7 +6,6 @@ on:
       - main
   workflow_dispatch:
 
-# CRITICAL: Permissions must be at workflow level for Workload Identity
 permissions:
   contents: read
   id-token: write
@@ -26,6 +25,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug GitHub Context
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Repository Owner: ${{ github.repository_owner }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Actor: ${{ github.actor }}"
+
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
@@ -34,6 +40,8 @@ jobs:
           service_account: 'ws25-student@hs-heilbronn-devsecops.iam.gserviceaccount.com'
           token_format: 'access_token'
           access_token_lifetime: '3600s'
+          # Add explicit audience
+          audience: 'https://iam.googleapis.com/projects/70756149774/locations/global/workloadIdentityPools/github-actions/providers/github-repos'
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -69,16 +77,5 @@ jobs:
           echo "=========================================="
           echo "✅ Deployment Completed Successfully!"
           echo "=========================================="
-          echo ""
-          echo "📦 Service Name: ${{ env.SERVICE_NAME }}"
           echo "🌐 Service URL: ${{ steps.deploy.outputs.url }}"
-          echo "📍 Region: ${{ env.REGION }}"
-          echo "🏷️  Image Tag: ${{ github.sha }}"
-          echo ""
-          echo "🔗 Full Image Path:"
-          echo "${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
-          echo ""
-          echo "=========================================="
-          echo "Test your deployment:"
-          echo "curl ${{ steps.deploy.outputs.url }}"
           echo "=========================================="
